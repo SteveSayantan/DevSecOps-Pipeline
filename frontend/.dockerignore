@@ -1,0 +1,9 @@
+__tests__/
+.eslintrc.cjs
+eslint.config.js
+jest.config.ts
+*.md
+test-setup.ts
+.gitignore
+.prettier*
+node_modules/

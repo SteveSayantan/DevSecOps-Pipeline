@@ -1,0 +1,73 @@
+name: CI
+on:
+  workflow_dispatch:
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          # caches npm’s global cache directory between workflow runs, enabling npm to retrieve package archives from the restored cache 
+          # instead of downloading everything from the registry again in the subsequent workflow runs as every new runner starts with an empty npm cache 
+          # This speeds up the installation of dependencies and reduces network traffic
+          # But it does not cache the node_modules directory
+          cache: 'npm'
+          # specifies the dependency file determining the cache key.
+          # When the lockfile changes, the cache key changes and GitHub Actions creates a new cache. 
+          # This prevents dependencies from one lockfile version being incorrectly reused for another.
+          cache-dependency-path: package-lock.json
+
+          # There is another property called `package-manager-cache`. It is useful when when the root package.json declares a package manager (e.g., npm). In that case we don't need to specify `cache: npm` explicitly, as the detection of the package manager and caching will be handled automatically.
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Dependency Scan
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Run Tests with Coverage
+        run: npm run test:ci
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-pages-artifact@v7
+        with:
+          name: backend-coverage-report-${{ github.run_number }}
+          path: dist/
+          if-no-files-found: error
+
+      - name: Build
+        run: npm run build
+
+      - name: Log in to the Container registry
+        # Once the job is over, this action will log out from the registry automatically as the `logout` input is set to `true` by default.
+        uses: docker/login-action@v4
+          
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        # This action determines which tags and labels should be assigned to the Docker image
+        uses: docker/metadata-action@v6
+        with:
+          # This is the base name of the image to be built and pushed
+          images: |
+            ${{ secrets.DOCKER_REGISTRY }}/frontend
+          # This is the tag to be assigned to the image. The `prefix` is set to an empty string, so the tag will be just the short SHA without any prefix (e.g., `abcd1234` instead of `sha-abcd1234`).
+          tags: |
+            type=sha,prefix=
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+      
+      # TODO:
+      # FIX the Log in to the Container registry step with appropriate secrets
+      

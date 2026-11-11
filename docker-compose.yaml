@@ -1,0 +1,60 @@
+services:
+  frontend: 
+    build: ./frontend
+    ports:
+      - "80:8080"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
+  redis:
+    image: 'redis:alpine3.22'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 7s
+    volumes:
+      - redis-data:/data
+  backend:
+    build: ./backend
+    ports: 
+      - "8000:8080"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+        required: false
+  db:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+      - ./backend/init-db.js:/docker-entrypoint-initdb.d/init-db.js
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "mongosh"
+        - "--username"
+        - "$$APP_MONGO_USER"  # $$ allows us to refer to environment variables that we don't want processed by Compose.
+        - "--password"
+        - "$$APP_MONGO_PASS"
+        - "--authenticationDatabase"
+        - "$$MONGO_INITDB_DATABASE"
+        - "--eval"
+        - "db.runCommand('ping').ok"
+        - "--quiet"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    env_file:
+      - ./backend/.env
+volumes:
+  mongo-data:
+  mongo-config:
+  redis-data:
