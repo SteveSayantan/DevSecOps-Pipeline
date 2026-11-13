@@ -5,7 +5,7 @@ dotenv.config();
 type TokenExpiry = '15m' | '30m' | '1h' | '2h' | '1d' | '7d' | '30d';
 
 const PORT = process.env.PORT;
-const MONGODB_URI = `mongodb://${process.env.APP_MONGO_USER??'demo'}:${process.env.APP_MONGO_PASS??'password'}@${process.env.MONGO_HOST??'localhost'}:27017/${process.env.MONGO_INITDB_DATABASE}?authSource=${process.env.MONGO_INITDB_DATABASE}`;
+const MONGODB_URI = `mongodb://${process.env.APP_MONGO_USER??'demo'}:${process.env.APP_MONGO_PASS??'password'}@${process.env.MONGO_HOST??'localhost'}:27017/${process.env.APP_MONGO_DB??"test"}?authSource=${process.env.APP_MONGO_DB??"test"}`;
 const REDIS_URL = `redis://${process.env.REDIS_HOST??"localhost"}:6379`;
 const ACCESS_COOKIE_MAXAGE = process.env.ACCESS_COOKIE_MAXAGE;
 const REFRESH_COOKIE_MAXAGE = process.env.REFRESH_COOKIE_MAXAGE;
