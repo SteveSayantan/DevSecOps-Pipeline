@@ -2,9 +2,9 @@ FROM node:24.22-alpine AS builder
 
 WORKDIR /app/
 
-COPY package.json .
+COPY package.json package-lock.json ./
 
-RUN npm i
+RUN npm ci
 
 COPY . .
 
@@ -14,9 +14,9 @@ FROM node:lts-alpine
 
 WORKDIR /app/
 
-COPY package.json .
+COPY package.json package-lock.json ./
 
-RUN npm i --omit=dev
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist /app/seed-db.js ./
 
