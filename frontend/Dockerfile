@@ -2,10 +2,10 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app/
 
-COPY package.json .
+COPY package.json package-lock.json ./
 
 # The --ignore-scripts flag skips the "prepare" script block
-RUN npm i --legacy-peer-deps --ignore-scripts
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 COPY . .
 
